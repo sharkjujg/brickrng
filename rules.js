@@ -2,6 +2,8 @@
 // test(m, poolDate) and evidence(m, poolDate) read the prepared member from prep().
 // Collector Milestone from the plan is a player achievement (no subject points), so it is not in this catalog.
 
+export const RULESET = '2'; // 2: common band badges added so no record earns nothing
+
 export const norm = (s) => s.normalize('NFKC').toLowerCase();
 
 const fmt = (n) => n.toLocaleString('en');
@@ -57,4 +59,8 @@ export const RULES = [
     test: (m) => /^[0-9]{3,}$/.test(stem(m)) && stem(m) === [...stem(m)].reverse().join(''), evidence: (m) => `Set number ${stem(m)} reads the same backwards` },
   { id: 'round-count', name: 'Round Count', family: 'Count pattern', rule: 'Advertised piece count is 100 or more and divisible by 100',
     test: (m) => m.pieces !== null && m.pieces >= 100 && m.pieces % 100 === 0, evidence: pcs },
+  { id: 'mid-build', name: 'Mid-Size Build', family: 'Build size', rule: 'Advertised piece count from 51 through 999',
+    test: (m) => m.pieces !== null && m.pieces >= 51 && m.pieces <= 999, evidence: pcs },
+  { id: 'small-crew', name: 'Small Crew', family: 'Crew size', rule: 'A complete minifigure count from 2 through 9',
+    test: (m) => m.minifigs !== null && m.minifigs >= 2 && m.minifigs <= 9, evidence: figs },
 ];

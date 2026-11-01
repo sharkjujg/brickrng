@@ -23,6 +23,8 @@ export const cases = [
   ['mirror-set-id', { id: '11-1' }, false], ['mirror-set-id', { id: 'ab-1' }, false], ['mirror-set-id', { id: undefined }, false],
   ['round-count', { pieces: 100 }, true], ['round-count', { pieces: 5000 }, true], ['round-count', { pieces: 99 }, false], ['round-count', { pieces: 150 }, false],
   ['round-count', { pieces: 0 }, false],
+  ['mid-build', { pieces: 51 }, true], ['mid-build', { pieces: 999 }, true], ['mid-build', { pieces: 50 }, false], ['mid-build', { pieces: 1000 }, false], ['mid-build', { pieces: null }, false], ['mid-build', { pieces: 0 }, false],
+  ['small-crew', { minifigs: 2 }, true], ['small-crew', { minifigs: 9 }, true], ['small-crew', { minifigs: 1 }, false], ['small-crew', { minifigs: 10 }, false], ['small-crew', { minifigs: null }, false],
 ];
 
 export function poolChecks(raw, pool, ok) {
