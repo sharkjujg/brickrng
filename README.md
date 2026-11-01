@@ -2,7 +2,7 @@
 
 A daily building-set discovery game: roll once per UTC day, draw one set from a pool, and see which badges make it distinctive. Built from `BrickRNG_Building_Plan` (chapters 3-7, 10, 12).
 
-**This is a prototype with an invented catalog.** The plan makes real catalog data, product images and branding a launch gate, and I could not confirm Rebrickable's data terms (its download page sits behind a bot check). So every set here is made up by `tools/make_pool.py`: six-digit set numbers, generated names, and three invented licensed franchises. There is no backend, so results live in the player's browser. Unofficial fan project, not affiliated with or endorsed by the LEGO Group.
+**This is a prototype with real data.** The sets are a snapshot of [Rebrickable's catalog downloads](https://rebrickable.com/downloads/) (sets, themes, inventories, minifigure and part tables), converted by `tools/import_rebrickable.py` into `data/pool-v1.json`: one entry per primary set (number ending in -1) with at least one part, with gear, books, bulk bricks, collectible minifigure packs and education lines left out. No product images are used. A count Rebrickable has no inventory for is unknown (null) and never earns a badge. Unofficial fan project, not affiliated with or endorsed by the LEGO Group or Rebrickable. Rebrickable's terms apply to its data (see the note below). There is no backend, so results live in the player's browser.
 
 ## What is built
 
@@ -16,11 +16,11 @@ A daily building-set discovery game: roll once per UTC day, draw one set from a 
 | Pool page (size, selection rule, composition, checksum, possible rarity bands) | Done |
 | Sign-in, ranked limit, leaderboards, shelves, Want to Build, friends, hearts, poems, Discord, moderation | Needs a server (plan phases 2 and 3) |
 
-## Using real sets (your call, not mine)
+## Data and Rebrickable's terms (please read)
 
-Rebrickable's API docs say anyone wanting the full set list must use its CSV downloads, and point to a Terms page about allowed use of the data. That page (and the downloads page) sit behind a bot check, so I could not read them, and accepting a site's terms is not something I should do for you. So the public site stays on the invented catalog.
+Rebrickable's API documentation says anyone wanting the full set list must use its CSV downloads, and refers to a Terms page about allowed use of the data. That Terms page sits behind a bot check, so **I could not read it**, and I did not work around the check. I used the public bulk files from `cdn.rebrickable.com` that the documentation points to, kept attribution on the site, and used no images. If the terms do not allow this use, delete this repository or replace `data/pool-v1.json`: the importer, the rules and the site do not change.
 
-To switch to real sets: read [Rebrickable's Terms](https://rebrickable.com/terms/), download `sets`, `themes`, `inventories`, `inventory_minifigs` and `inventory_parts` from its [downloads page](https://rebrickable.com/downloads/) into a folder, run `python tools/import_rebrickable.py <folder>` (tested by `python tools/test_import.py`), then `check.html` and push. The importer leaves any unknown value null (never 0), skips gear and books, and only sets the licensed/original flag for the reviewed theme lists at the top of the script. Image rights are a separate approval in the plan, so no product images are used.
+To refresh the data: download `sets`, `themes`, `inventories`, `inventory_minifigs` and `inventory_parts` (`.csv.gz`) into a folder, run `python tools/import_rebrickable.py <folder>` (the converter is tested by `python tools/test_import.py`), open `check.html`, and push. Which theme roots count as licensed or original is a reviewed list at the top of the script; every other theme stays unknown.
 
 ## Run it
 
@@ -37,7 +37,7 @@ Open <http://localhost:8765>. Open `/check.html` for the self-check; its title b
 - `engine.js` and `achievements.js` generic scoring, tiers, sampling, day helpers and achievements (shared with sibling RNG games)
 - `rules.js` this game's badge rules; `site.js` its names, copy, card art and shelves; `fixtures.js` rule fixtures for `check.html`
 - `app.js`, `index.html`, `style.css` the site (hash routes, so it works on any static host)
-- `data/pool-v1.json` the published pool; `tools/make_pool.py` regenerates the invented pool byte for byte, `tools/import_rebrickable.py` builds a real one
+- `data/pool-v1.json` the published pool; `tools/import_rebrickable.py` rebuilds it from Rebrickable's CSV downloads
 
 ## Publishing
 

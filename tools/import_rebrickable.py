@@ -21,11 +21,16 @@ import json
 import pathlib
 import sys
 
-EXCLUDE_ROOTS = {"Gear", "Books", "Supplemental", "Service Packs", "Educational and Dacta", "Promotional", "Other"}
-LICENSED_ROOTS = {"Star Wars", "Harry Potter", "Marvel Super Heroes", "DC Comics Super Heroes", "Disney", "Minecraft", "Jurassic World",
-                  "Jurassic Park", "The Simpsons", "Indiana Jones", "Super Mario", "Speed Champions", "Ghostbusters", "Back to the Future"}
-ORIGINAL_ROOTS = {"City", "Town", "Castle", "Space", "Pirates", "Technic", "Creator", "Friends", "Ninjago", "Classic", "Train", "Trains",
-                  "Western", "Aquazone", "Monkie Kid", "Hidden Side", "Bionicle", "Duplo", "Explorien", "Rock Raiders"}
+EXCLUDE_ROOTS = {"Gear", "Books", "Supplemental", "Service Packs", "Educational and Dacta", "Promotional", "Other", "LEGO Brand Store", "Bulk Bricks",
+                 "Collectible Minifigures", "FIRST LEGO League", "Power Functions"}  # the plan keeps these out until they are defined as separate categories
+# Reviewed by hand against Rebrickable's root theme names: third-party franchises versus themes the LEGO Group created. Everything else stays unknown (null).
+LICENSED_ROOTS = {"Star Wars", "Super Heroes Marvel", "Super Heroes DC", "Disney", "Minecraft", "Harry Potter", "Jurassic World", "Jurassic Park", "Super Mario",
+                  "Speed Champions", "The Hobbit and Lord of the Rings", "Indiana Jones", "Pokémon", "Sonic The Hedgehog", "Teenage Mutant Ninja Turtles",
+                  "Animal Crossing", "Cars", "Ghostbusters", "The Simpsons", "Back to the Future", "Toy Story", "Pirates of the Caribbean", "Avatar", "Wicked"}
+ORIGINAL_ROOTS = {"City", "Town", "Castle", "Space", "Pirates", "Technic", "Creator", "Friends", "Ninjago", "Classic", "Train", "Western", "Aquazone", "Monkie Kid",
+                  "Hidden Side", "Bionicle", "Duplo", "Explorien", "Rock Raiders", "Racers", "Hero Factory", "Legends of Chima", "Nexo Knights", "Mixels", "Belville",
+                  "Scala", "Fabuland", "Adventurers", "Exo-Force", "Dreamzzz", "Elves", "Atlantis", "Alpha Team", "Agents", "Power Miners", "Galidor", "Mindstorms",
+                  "Primo", "Juniors", "4 Juniors", "DOTS", "Architecture", "Modular Buildings", "Studios", "Freestyle", "Homemaker", "Znap", "Xtra", "Boat"}
 NO_COLOR = {"-1", "9999"}  # Rebrickable's "unknown" and "no/any color" entries are not real element colors
 
 
