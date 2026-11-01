@@ -1,6 +1,7 @@
 // Generic app shell for an RNG-style daily game. Everything specific to one game (names, copy, art, facts) is in site.js.
 import site from './site.js';
 import { RULES, RULESET, TIERS, badgeTier, evaluatePool, randomIndex, dayKey, nextReset, weekStartKey, rollId, parseRollId, level, fmtPct, fmtNum, oneIn, shareText } from './engine.js';
+import { TIER_RANK, buildAchievements, progressOf, valueOf, unlockedIds } from './achievements.js';
 
 const KEY = `${site.key}.v1`;
 const THEME_KEY = `${site.key}.theme`;
@@ -100,6 +101,49 @@ function wireActions(roll) {
   }
 }
 
+// ---- achievements: derived from the player's rolls and the immutable pool ----
+const getCat = (pool) => (pool.cat ??= buildAchievements(pool, RULES, site.shelves, site));
+function newUnlocks(pool, roll) { // achievements this roll just unlocked
+  const cat = getCat(pool);
+  const was = unlockedIds(cat.list, progressOf(cat, Object.values(S.rolls).filter((r) => r.day !== roll.day)));
+  const is = unlockedIds(cat.list, progressOf(cat, Object.values(S.rolls)));
+  return cat.list.filter((a) => is.has(a.id) && !was.has(a.id));
+}
+function unlockList(items) {
+  if (!items.length) return '';
+  const shown = items.slice(0, 6);
+  return `<section class="unlocks" aria-label="Achievements unlocked"><h2>Achievements unlocked (${items.length})</h2><ul class="plain">${shown.map((a, i) =>
+    `<li style="--i:${i}"><b>${esc(a.name)}</b><span class="small muted">${esc(a.desc)}</span></li>`).join('')}</ul>
+    <p class="small">${items.length > shown.length ? `and ${items.length - shown.length} more. ` : ''}<a href="#/achievements">See all achievements</a></p></section>`;
+}
+
+// ---- reveal flourishes: purely cosmetic, never run under reduced motion, and the roll is already saved ----
+function countUp(el, end, active) {
+  const t0 = performance.now();
+  const step = (t) => {
+    if (!active()) return;
+    const k = Math.min(1, (t - t0) / 700);
+    el.textContent = `${fmtNum(Math.round(end * (1 - (1 - k) ** 3)))} RP`;
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function flourish(card, tier) {
+  const r = TIER_RANK[tier];
+  if (r > 3) return;
+  card.classList.add('fx');
+  if (r > 2) return;
+  const box = document.createElement('div');
+  box.className = 'burst'; box.setAttribute('aria-hidden', 'true');
+  for (let i = 0, n = 28 + (2 - r) * 16; i < n; i++) {
+    const p = document.createElement('i'), a = Math.random() * 6.283, d = 90 + Math.random() * 170;
+    p.style.cssText = `--x:${Math.cos(a) * d}px;--y:${Math.sin(a) * d - 60}px;--h:${Math.floor(Math.random() * 360)};--d:${Math.random() * 0.25}s`;
+    box.append(p);
+  }
+  card.append(box);
+  later(() => box.remove(), 2000);
+}
+
 // ---- timers: cleared on every navigation ----
 let timers = [];
 const later = (f, ms) => timers.push(setTimeout(f, ms));
@@ -127,20 +171,32 @@ async function home() {
 
   const showRoll = (roll, animate) => {
     const m = pool.members[roll.index];
-    $('res').innerHTML = resultCard(roll, pool, animate ? '' : 's1 s2 s3');
+    const fancy = animate && !reduced();
+    $('res').innerHTML = (fancy ? '<p class="reel" id="reel" aria-hidden="true"></p>' : '') + resultCard(roll, pool, animate ? '' : 's1 s2 s3');
+    const card = $('res').querySelector('.rv');
+    card.querySelectorAll('.badges li').forEach((li, i) => li.style.setProperty('--i', i));
     const resetAt = nextReset(now()); // fixed at render time: recomputing it each tick would always point at the next midnight
     $('act').innerHTML = `<p><b>Today's roll is saved.</b> Next roll in <span id="cd"></span>, at ${new Date(resetAt).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}.</p>${animate && !reduced() ? '<button id="skip" type="button">Skip animation</button>' : ''}`;
     const tick = () => { const left = resetAt - now(); if (left <= 0) route(); else $('cd').textContent = fmtCd(left); };
     tick(); every(tick, 1000);
+    const unlocked = animate ? newUnlocks(pool, roll) : [];
+    let counting = false;
     const done = () => {
-      $('skip')?.remove();
-      $('res').firstElementChild.classList.add('s1', 's2', 's3');
-      $('acts').innerHTML = actions(roll); wireActions(roll);
-      if (animate) live.textContent = `Revealed ${site.header(m).title}: ${roll.tier}, ${fmtNum(roll.rp)} rarity points.`;
+      counting = false;
+      $('skip')?.remove(); $('reel')?.remove();
+      card.classList.add('s1', 's2', 's3');
+      card.querySelector('.rp').textContent = `${fmtNum(roll.rp)} RP`;
+      $('acts').innerHTML = actions(roll) + unlockList(unlocked); wireActions(roll);
+      if (animate) live.textContent = `Revealed ${site.header(m).title}: ${roll.tier}, ${fmtNum(roll.rp)} rarity points.${unlocked.length ? ` ${unlocked.length} achievement${unlocked.length === 1 ? '' : 's'} unlocked.` : ''}`;
     };
-    if (!animate || reduced()) return done();
+    if (!fancy) return done();
+    // reel of random names, then the saved result lands: name, rarity with a count-up, badges one by one
+    const spin = setInterval(() => { $('reel').textContent = site.label(pool.members[Math.floor(Math.random() * pool.n)]); }, 70);
+    timers.push(spin);
     $('skip').onclick = () => { timers.forEach(clearTimeout); done(); every(tick, 1000); };
-    [1, 2, 3].forEach((s) => later(() => { $('res').firstElementChild.classList.add('s' + s); if (s === 3) done(); }, 700 * s));
+    later(() => { clearInterval(spin); $('reel').remove(); card.classList.add('s1'); }, 1100);
+    later(() => { card.classList.add('s2'); counting = true; countUp(card.querySelector('.rp'), roll.rp, () => counting); flourish(card, roll.tier); }, 1800);
+    later(() => { card.classList.add('s3'); done(); }, 2500);
   };
 
   const mine = S.rolls[dayKey(now())];
@@ -178,10 +234,12 @@ async function mePage() {
   const earned = new Set(rolls.flatMap((r) => r.awards.map((a) => a.id)));
   const activeN = RULES.filter((r) => pool.stats[r.id].k).length;
   const best = rolls.reduce((b, r) => (!b || r.rp > b.rp ? r : b), null);
+  const cat = getCat(pool);
   show('My rolls', `${h1('My rolls')}
     <div class="stats"><div><b>${rolls.length}</b>Rolls</div><div><b>${fmtNum(rolls.reduce((s, r) => s + r.rp, 0))}</b>Total RP</div>
       <div><b>${best ? fmtNum(best.rp) : '–'}</b>Best roll (RP)</div><div><b>${fmtNum(rolls.filter((r) => r.day >= wk).reduce((s, r) => s + r.rp, 0))}</b>RP this week (Mon-Sun UTC)</div>
-      <div><b>${earned.size} / ${activeN}</b>Badges collected</div></div>
+      <div><b>${earned.size} / ${activeN}</b>Badges collected</div>
+      <div><b>${fmtNum(unlockedIds(cat.list, progressOf(cat, rolls)).size)} / ${fmtNum(cat.list.length)}</b><a href="#/achievements">Achievements</a></div></div>
     ${rolls.length ? `<label>Sort <select id="sort"><option value="new">Newest</option><option value="old">Oldest</option><option value="rp">Most RP</option></select></label><div id="hist"></div>`
       : '<p>No rolls yet. <a href="#/">Make your first roll</a>.</p>'}
     <h2>Your data</h2>
@@ -282,6 +340,38 @@ async function poolPage() {
     <p class="small muted">Tied ${N} share a tier, so a tier can be empty when ties straddle its boundary.</p>`);
 }
 
+async function achievementsPage() {
+  const pool = await getPool();
+  const cat = getCat(pool);
+  const st = progressOf(cat, myRolls());
+  const rows = cat.list.map((a) => ({ a, v: valueOf(a, st) }));
+  const got = rows.filter((r) => r.v >= r.a.goal).length;
+  const groups = [...new Set(rows.map((r) => r.a.group))];
+  show('Achievements', `${h1('Achievements')}
+    <p><b>${fmtNum(got)}</b> of <b>${fmtNum(rows.length)}</b> unlocked. They are worked out from your saved rolls and the pool, and they scale with it: a pool of ${fmtNum(pool.n)} ${N} gives ${fmtNum(rows.length)} achievements, with discovery, point and shelf goals sized to the pool. One roll a day makes most of these long-term goals.</p>
+    <progress max="${rows.length}" value="${got}" aria-label="Achievements unlocked"></progress>
+    <div class="filters"><label>Search <input id="aq" type="search"></label>
+      <label>Group <select id="ag"><option value="">All</option>${groups.map((g) => `<option>${esc(g)}</option>`).join('')}</select></label>
+      <label>Show <select id="as"><option value="">All</option><option value="todo">In progress</option><option value="done">Unlocked</option><option value="new">Not started</option></select></label></div>
+    <p id="acount" class="small muted" role="status"></p><ul class="plain" id="alist"></ul><div class="row"><button id="amore" type="button" hidden>Show more</button></div>`);
+  let limit = 60;
+  const paint = () => {
+    const q = document.getElementById('aq').value.trim().toLowerCase(), g = document.getElementById('ag').value, s = document.getElementById('as').value;
+    const rs = rows.filter(({ a, v }) => (!q || (a.name + ' ' + a.desc).toLowerCase().includes(q)) && (!g || a.group === g)
+      && (!s || (s === 'done' ? v >= a.goal : s === 'todo' ? v > 0 && v < a.goal : v === 0)));
+    document.getElementById('acount').textContent = `${fmtNum(rs.length)} achievement${rs.length === 1 ? '' : 's'}`;
+    document.getElementById('alist').innerHTML = rs.slice(0, limit).map(({ a, v }) => {
+      const ok = v >= a.goal, shown = Math.min(v, a.goal);
+      return `<li class="card ach${ok ? ' got' : ''}"><div class="bh"><strong>${esc(a.name)}</strong><span class="chip ${ok ? 't-uncommon' : 't-none'}">${ok ? 'Unlocked' : `${fmtNum(shown)} / ${fmtNum(a.goal)}`}</span></div>
+        <p class="small muted">${esc(a.group)}: ${esc(a.desc)}</p><progress max="${a.goal}" value="${shown}" aria-label="Progress"></progress></li>`;
+    }).join('');
+    document.getElementById('amore').hidden = rs.length <= limit;
+  };
+  ['aq', 'ag', 'as'].forEach((id) => document.getElementById(id).addEventListener('input', () => { limit = 60; paint(); }));
+  document.getElementById('amore').onclick = () => { limit += 120; paint(); };
+  paint();
+}
+
 function aboutPage() {
   show('About', `${h1(`About ${site.name}`)}
     <h2>How it works</h2>
@@ -305,7 +395,7 @@ function aboutPage() {
 }
 
 // ---- router ----
-const routes = { '': home, roll: rollPage, badges: (id) => (id ? badgePage(id) : badgesPage()), me: mePage, pool: poolPage, about: aboutPage };
+const routes = { '': home, roll: rollPage, badges: (id) => (id ? badgePage(id) : badgesPage()), achievements: achievementsPage, me: mePage, pool: poolPage, about: aboutPage };
 let first = true;
 async function route() {
   timers.forEach(clearTimeout); timers = [];

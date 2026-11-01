@@ -7,6 +7,7 @@
 <script type="module">
 import { RULES, badgeTier, rollTier, evaluatePool, randomIndex, dayKey, nextReset, weekStartKey, rollId, parseRollId, level, fmtPct, oneIn, shareText } from './engine.js';
 import { prep } from './rules.js';
+import { TIER_RANK, buildAchievements, progressOf, valueOf, unlockedIds } from './achievements.js';
 import { V, base, cases, poolChecks } from './fixtures.js';
 
 const out = []; let fails = 0;
@@ -46,6 +47,35 @@ eq('the highest family weight counts, the rest add 0', mini.evals[3].awards.map(
 eq('nominal weight is round(100 / p)', mini.stats.a, { k: 3, nominal: 133, tier: 'Common' });
 eq('deferred badge is inactive', mini.stats.z, { k: 0, nominal: 0, tier: null });
 ok('percentile counts ties as at-or-above', mini.evals.every((e) => e.c === mini.evals.filter((x) => x.rp >= e.rp).length));
+
+// --- achievements: derived from rolls, scaled from the pool ---
+const shelvesOf = (m) => [['Size', 'all'], ...(m.x >= 2 ? [['Top', 'three']] : []), ['Parity', m.x % 2 ? 'odd' : 'even']];
+const site = { noun: 'thing', nouns: 'things' };
+const cat = buildAchievements(mini, toy, shelvesOf, site);
+const find = (kind, goal, p) => cat.list.find((a) => a.kind === kind && a.goal === goal && (p === undefined || a.p === p));
+ok('achievement ids are unique', new Set(cat.list.map((a) => a.id)).size === cat.list.length);
+eq('shelf goals follow the shelf size; shelves under 3 members get none', ['Size\u0001all', 'Top\u0001three', 'Parity\u0001odd', 'Parity\u0001even'].map((k) => cat.list.filter((a) => a.p === k).map((a) => a.goal)), [[1, 2, 4], [1, 2, 3], [], []]);
+ok('no achievement for a tier the pool cannot produce', !cat.list.some((a) => a.kind === 'tier' && a.p === TIER_RANK.Epic) && cat.list.some((a) => a.kind === 'tier' && a.p === TIER_RANK.Rare));
+const big = evaluatePool({ meta: { publishedAt: V }, members: Array.from({ length: 1000 }, (_, i) => ({ x: i + 1 })) }, toy, (m) => m);
+const bigCat = buildAchievements(big, toy, shelvesOf, site);
+const goalsOf = (c) => c.list.filter((a) => a.kind === 'distinct').map((a) => a.goal);
+eq('discovery goals grow with the pool (n=4 vs n=1000)', [goalsOf(cat), goalsOf(bigCat).length > goalsOf(cat).length, Math.max(...goalsOf(bigCat))], [[1, 2, 4], true, 1000]);
+ok('a bigger pool gets more achievements', bigCat.list.length > cat.list.length);
+const roll = (day, index) => ({ day, index, rp: mini.evals[index].rp, tier: mini.evals[index].tier, awards: mini.evals[index].awards });
+const history = [roll('2026-11-04', 0), roll('2026-11-01', 3), roll('2026-11-02', 3)]; // deliberately out of order
+const st = progressOf(cat, history);
+eq('progress counts days, streak, distinct, repeats, points', [st.days, st.streak, st.distinct, st.repeat, st.rp], [3, 2, 2, 2, 1600]);
+eq('progress counts badges and shelves', [st.badges.size, st.badges.get('b'), st.shelves.get('Top\u0001three').size, st.shelves.get('Size\u0001all').size], [5, 2, 1, 2]);
+const has = (kind, goal, p) => valueOf(find(kind, goal, p), st) >= goal;
+eq('unlocked versus not yet', [has('days', 3), has('days', 7), has('streak', 2), has('streak', 3), has('repeat', 2), has('repeat', 3), has('badge', 1, 'a'), has('badge', 2, 'a'), has('badge', 5, 'a'), has('shelf', 1, 'Top\u0001three'), has('shelf', 2, 'Top\u0001three'), has('shelf', 2, 'Size\u0001all')],
+  [true, false, true, false, true, false, true, true, false, true, false, true]);
+{
+  const fam = (id) => cat.list.find((a) => a.kind === 'family' && a.p.includes(id));
+  const x3 = progressOf(cat, [roll('2026-11-01', 2)]); // x=3 earns a, d and e: all of family H but only half of family F
+  eq('a family unlocks only when every badge in it is earned', [valueOf(fam('d'), x3) >= fam('d').goal, valueOf(fam('a'), x3) >= fam('a').goal, valueOf(fam('a'), st) >= fam('a').goal], [true, false, true]);
+}
+const one = unlockedIds(cat.list, progressOf(cat, [history[1]])), two = unlockedIds(cat.list, progressOf(cat, [history[1], history[2]]));
+ok('the second consecutive day unlocks the 2-day streak and nothing is lost', !one.has(find('streak', 2).id) && two.has(find('streak', 2).id) && [...one].every((id) => two.has(id)));
 
 // --- sampling ---
 const seq = (...xs) => () => xs.shift();

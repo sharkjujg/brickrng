@@ -89,3 +89,21 @@ progress { width: 100%; accent-color: var(--accent); }
 .rv:not(.s1) .avatar { filter: brightness(0) opacity(.3); }
 .rv:not(.s1) [data-s="1"], .rv:not(.s2) [data-s="2"], .rv:not(.s3) [data-s="3"] { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .rv [data-s], .avatar { transition: none; } }
+
+/* Reveal flourishes: a reel of names, badges arriving one by one, a pulse and a burst for the rare tiers, unlock cards. */
+.rv { position: relative; }
+.reel { font-size: 1.4rem; font-weight: 700; text-align: center; margin: 1rem 0; min-height: 2.1rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--muted); }
+.rv .badges li { transition: opacity .45s ease, transform .45s ease; transition-delay: calc(var(--i, 0) * 90ms); }
+.rv:not(.s3) .badges li { opacity: 0; transform: translateY(10px); }
+.fx { animation: pulse 1.2s ease-out 2; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 100% { box-shadow: 0 0 0 22px transparent; } }
+.burst { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.burst i { position: absolute; left: 50%; top: 28%; width: .5rem; height: .85rem; background: hsl(var(--h) 85% 58%); opacity: 0; animation: fly 1.5s ease-out var(--d) forwards; }
+@keyframes fly { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 100% { opacity: 0; transform: translate(var(--x), var(--y)) rotate(540deg); } }
+.unlocks li { display: flex; flex-direction: column; gap: .1rem; padding: .5rem .8rem; margin: .45rem 0; border: 1.5px solid var(--accent); border-radius: .7rem; background: var(--card); animation: slidein .5s ease both; animation-delay: calc(var(--i, 0) * 130ms); }
+@keyframes slidein { from { opacity: 0; transform: translateX(-18px); } }
+.ach.got { border-color: var(--t-uncommon); }
+.ach progress { margin-top: .25rem; }
+button:active { transform: scale(.97); }
+@media (prefers-reduced-motion: reduce) { .fx, .burst i, .unlocks li { animation: none; } .rv .badges li { transition: none; } }
+img.avatar { object-fit: contain; max-height: 15rem; background: var(--soft); }

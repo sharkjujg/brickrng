@@ -15,6 +15,14 @@ export default {
   notice: 'Prototype: every set in this pool is invented, there are no accounts yet, and your results are saved only in this browser. <a href="#/about">What that means</a>',
   header: (m) => ({ title: m.name, sub: `Set ${m.id} · ${m.year}` }),
   label: (m) => `${m.name} (${m.year})`,
+  // shelves drive the shelf achievements: every [group, label] a set belongs to
+  shelves: (m) => [
+    ['Decade', `${Math.floor(m.year / 10) * 10}s`], ['Release year', String(m.year)], ['Theme', m.theme[0]],
+    ...(m.theme.length > 1 ? [['Sub-theme', m.theme.join(' › ')]] : []),
+    ['Size', m.pieces <= 50 ? 'Tiny (up to 50 pieces)' : m.pieces <= 200 ? 'Small (51 to 200)' : m.pieces <= 600 ? 'Medium (201 to 600)' : m.pieces < 1000 ? 'Large (601 to 999)' : m.pieces < 5000 ? 'Grand (1,000 to 4,999)' : 'Monumental (5,000 or more)'],
+    ...(m.minifigs === null ? [] : [['Minifigures', m.minifigs === 0 ? 'None' : m.minifigs === 1 ? 'One' : m.minifigs < 5 ? '2 to 4' : m.minifigs < 10 ? '5 to 9' : '10 or more']]),
+    ...(m.licensed === null ? [] : [['License', m.licensed ? 'Licensed worlds' : 'Original worlds']]),
+  ],
   facts: (m) => [
     ['Set number', m.id], ['Released', String(m.year)], ['Theme', m.theme.join(' › ')], ['Pieces (advertised)', fmt(m.pieces)],
     ['Minifigures', String(m.minifigs)], ['Licensed theme', m.licensed ? 'Yes' : 'No'], ['Colors in inventory', String(m.colors)], ['Distinct parts', String(m.parts)],

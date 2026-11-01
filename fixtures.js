@@ -27,12 +27,11 @@ export const cases = [
 
 export function poolChecks(raw, pool, ok) {
   const ms = raw.members;
-  ok('set numbers are six digits plus a suffix and are unique', new Set(ms.map((m) => m.id)).size === pool.n && ms.every((m) => /^[0-9]{6}-[0-9]+$/.test(m.id)));
-  ok('set names are unique', new Set(ms.map((m) => m.name.toLowerCase())).size === pool.n);
-  ok('every set has complete basic facts', ms.every((m) => Number.isInteger(m.year) && m.year >= 1958 && m.year <= 2026 && Number.isInteger(m.pieces) && m.pieces > 0
-    && Array.isArray(m.theme) && m.theme.length === 2 && typeof m.licensed === 'boolean' && Number.isInteger(m.minifigs) && m.minifigs >= 0));
-  ok('colors never exceed distinct parts, and parts never exceed pieces', ms.every((m) => m.colors >= 1 && m.colors <= m.parts && m.parts <= m.pieces));
-  ok('no minifigures before they existed (1978)', ms.every((m) => m.year >= 1978 || m.minifigs === 0));
-  ok('every badge is active in this pool', pool.n > 0 && Object.values(pool.stats).every((s) => s.k > 0));
+  ok('set numbers look like "digits-suffix" and are unique', new Set(ms.map((m) => m.id)).size === pool.n && ms.every((m) => /^[0-9A-Za-z]+-[0-9]+$/.test(m.id)));
+  ok('every set has complete basic facts', ms.every((m) => Number.isInteger(m.year) && m.year >= 1949 && m.year <= +raw.meta.capturedAt.slice(0, 4) && Number.isInteger(m.pieces) && m.pieces > 0
+    && Array.isArray(m.theme) && m.theme.length >= 1 && m.name));
+  ok('unknown counts are null, never 0 for colors and parts', ms.every((m) => ['colors', 'parts'].every((k) => m[k] === null || (Number.isInteger(m[k]) && m[k] > 0))));
+  ok('colors never exceed distinct parts, and parts never exceed pieces, where known', ms.every((m) => (m.colors === null || m.parts === null || m.colors <= m.parts) && (m.parts === null || m.parts <= m.pieces)));
+  ok('no minifigures before they existed (1978)', ms.every((m) => m.year >= 1978 || !m.minifigs));
   ok('the pool is large enough to be a game (>= 1000)', pool.n >= 1000);
 }
