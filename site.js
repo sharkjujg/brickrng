@@ -5,6 +5,7 @@ const hash = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0
 
 export default {
   key: 'brickrng',
+  store: 'v2', // the first pool was invented; saved rolls from it must not be read against the real catalog
   name: 'BrickRNG',
   pageTitle: 'BrickRNG: a daily building-set discovery game',
   noun: 'set', nouns: 'sets', thing: 'Set',
