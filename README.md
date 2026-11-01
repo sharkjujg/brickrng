@@ -2,7 +2,7 @@
 
 A daily building-set discovery game: roll once per UTC day, draw one set from a pool, and see which badges make it distinctive. Built from `BrickRNG_Building_Plan` (chapters 3-7, 10, 12).
 
-**This is a prototype with real data.** The sets are a snapshot of [Rebrickable's catalog downloads](https://rebrickable.com/downloads/) (sets, themes, inventories, minifigure and part tables), converted by `tools/import_rebrickable.py` into `data/pool-v1.json`: one entry per primary set (number ending in -1) with at least one part, with gear, books, bulk bricks, collectible minifigure packs and education lines left out. No product images are used. A count Rebrickable has no inventory for is unknown (null) and never earns a badge. Unofficial fan project, not affiliated with or endorsed by the LEGO Group or Rebrickable. Rebrickable's terms apply to its data (see the note below). There is no backend, so results live in the player's browser.
+**This is a prototype with real data.** The sets are a snapshot of [Rebrickable's catalog downloads](https://rebrickable.com/downloads/) (sets, themes, inventories, minifigure and part tables), converted by `tools/import_rebrickable.py` into `data/pool-v1.json`: one entry per primary set (number ending in -1) with at least one part, with gear, books, bulk bricks, collectible minifigure packs and education lines left out. No product images are used. A count Rebrickable has no inventory for is unknown (null) and never earns a badge. Unofficial fan project, not affiliated with or endorsed by the LEGO Group or Rebrickable. Set data is sourced from Rebrickable® (see the note below). LEGO® is a trademark of the LEGO Group, which does not sponsor, authorize or endorse this web site. There is no backend, so results live in the player's browser.
 
 ## What is built
 
@@ -16,9 +16,15 @@ A daily building-set discovery game: roll once per UTC day, draw one set from a 
 | Pool page (size, selection rule, composition, checksum, possible rarity bands) | Done |
 | Sign-in, ranked limit, leaderboards, shelves, Want to Build, friends, hearts, poems, Discord, moderation | Needs a server (plan phases 2 and 3) |
 
-## Data and Rebrickable's terms (please read)
+## Rebrickable® terms and LEGO® fair play (reviewed 2026-11-01)
 
-Rebrickable's API documentation says anyone wanting the full set list must use its CSV downloads, and refers to a Terms page about allowed use of the data. That Terms page sits behind a bot check, so **I could not read it**, and I did not work around the check. I used the public bulk files from `cdn.rebrickable.com` that the documentation points to, kept attribution on the site, and used no images. If the terms do not allow this use, delete this repository or replace `data/pool-v1.json`: the importer, the rules and the site do not change.
+The site owner supplied Rebrickable's Terms of Service and the LEGO Group's Fair Play guidance (the web page and the November 2018 brochure), and this project follows them:
+
+- **Data route (Terms 5.1 and 5.3):** the catalog comes from the public CSV bulk downloads on Rebrickable's Downloads page, converted by `tools/import_rebrickable.py`. The API is not used, no MOC data is touched, and the only automated fetching is of those download files, which the Terms allow.
+- **Credit (5.1):** the footer of every page, the About page and the hub say the set data is sourced from Rebrickable®, with a link.
+- **Images (5.2):** none are used; the art is generated.
+- **AI training (5.3):** the Terms forbid using Rebrickable content to train AI models. That applies to this derived data too.
+- **LEGO® trademarks:** the red LEGO logo is never used, no domain or repository name contains the trademark, and the name appears only to refer to the products the catalog lists. The footer and About page carry the disclaimer "LEGO® is a trademark of the LEGO Group, which does not sponsor, authorize or endorse this web site", and the About page names the other LEGO trademarks that appear in set and theme names (the Minifigure, DUPLO®, NINJAGO®, MINDSTORMS®, LEGOLAND®). No LEGO images, instructions or catalog photographs are shown, so no copyright line is needed.
 
 To refresh the data: download `sets`, `themes`, `inventories`, `inventory_minifigs` and `inventory_parts` (`.csv.gz`) into a folder, run `python tools/import_rebrickable.py <folder>` (the converter is tested by `python tools/test_import.py`), open `check.html`, and push. Which theme roots count as licensed or original is a reviewed list at the top of the script; every other theme stays unknown.
 

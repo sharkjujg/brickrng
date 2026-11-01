@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Convert Rebrickable's downloadable CSV tables into data/pool-v1.json, the pool format BrickRNG reads.
 
-Real data is a choice for the site owner: read Rebrickable's Terms (https://rebrickable.com/terms/) and download the
-tables yourself from https://rebrickable.com/downloads/ . Put sets, themes, inventories, inventory_minifigs and
+Rebrickable's Terms (https://rebrickable.com/terms/, reviewed 2026-11-01) allow catalog use via its bulk downloads: download the
+tables from https://rebrickable.com/downloads/ , credit Rebrickable, use no images and no AI training. Put sets, themes, inventories, inventory_minifigs and
 inventory_parts (.csv or .csv.gz) in one folder, then:
 
     python tools/import_rebrickable.py <folder>
@@ -100,7 +100,7 @@ def write(members, out_path, source_note):
     today = dt.datetime.now(dt.timezone.utc).date().isoformat()
     cov = lambda f: f"known for {sum(m[f] is not None for m in members):,} of {n:,}; unknown never satisfies a badge"
     meta = {"version": "v1", "publishedAt": today, "capturedAt": today, "source": "Rebrickable catalog downloads (https://rebrickable.com/downloads/)",
-            "provenance": f"Imported {today} by tools/import_rebrickable.py. {source_note} Rebrickable's terms apply to this data.",
+            "provenance": f"Imported {today} by tools/import_rebrickable.py. {source_note} Data sourced from Rebrickable® under its Terms of Service (catalog downloads; no images).",
             "selection": "One entry per primary set (number ending in -1) with at least one part; gear, books and similar roots skipped. Piece counts are Rebrickable's part counts.",
             "fieldStatus": {"id": "known", "name": "known", "year": "known (year precision)", "theme": "known (Rebrickable theme tree)", "pieces": "known",
                             "minifigs": cov("minifigs"), "licensed": cov("licensed"), "colors": cov("colors"), "parts": cov("parts")}}
